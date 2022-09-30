@@ -87,10 +87,10 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
           # Before script
           before_script: |
-            if [ ! -d /var/www/xxxx ];then mkdir /var/www/xxxx;elif [[ -n $(ls /var/www/xxxx) ]];then rm -r /var/www/xxxx/*;fi
+            if [ ! -d /var/www/dns-selector ];then mkdir /var/www/dns-selector;elif [[ -n $(ls /var/www/dns-selector) ]];then rm -r /var/www/dns-selector/*;fi
           # After script
           after_script: nginx -s reload
           # After script
           scp_source: ./dist/*
           # After script
-          scp_target: /var/www/xxxx/
+          scp_target: /var/www/dns-selector/
