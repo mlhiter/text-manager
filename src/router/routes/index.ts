@@ -16,7 +16,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '',
     name: 'Layout',
     component: MainLayout,
-    redirect: { name: 'Index' },
+    redirect: { name: 'Search' },
     meta: { title: '首页', isNavMenu: false /* , permissions: ['admin'] */ },
     children: [
       {
@@ -26,6 +26,16 @@ export const asyncRoutes: RouteRecordRaw[] = [
           import(/* webpackChunkName: "index" */ '@/pages/Index.vue'),
         meta: {
           title: '首页',
+          isNavMenu: true /* , permissions: ['admin'] */,
+        },
+      },
+      {
+        path: '/search',
+        name: 'Search',
+        component: () =>
+          import(/* webpackChunkName: "search" */ '@/pages/Search.vue'),
+        meta: {
+          title: '探测',
           isNavMenu: true /* , permissions: ['admin'] */,
         },
       },

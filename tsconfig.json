@@ -29,7 +29,8 @@
     "src/**/*.vue",
     "build/**/*.ts",
     "mock/**/*.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "types/dns.d.ts"
   ],
   "exclude": ["dist", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]

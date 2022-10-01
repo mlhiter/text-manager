@@ -4,5 +4,10 @@
     "module": "esnext",
     "moduleResolution": "node"
   },
-  "include": ["build/**/*.ts", "types/**/*.d.ts", "vite.config.ts"]
+  "include": [
+    "build/**/*.ts",
+    "types/**/*.d.ts",
+    "vite.config.ts",
+    "types/dns.d.ts"
+  ]
 }

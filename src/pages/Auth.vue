@@ -114,8 +114,8 @@ const handlers = {
               :alt="appName"
             />
             <div m="l-4">
-              <p text="md" font="tracking-wide">{{ appDesc }}</p>
               <h1 text="xl">{{ appName }}</h1>
+              <p text="md" font="tracking-wide">{{ appDesc }}</p>
             </div>
           </div>
           <n-form

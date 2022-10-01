@@ -9,7 +9,7 @@ import { useStore } from '@/store'
 
 const { appName, appDesc } = useAppMeta()
 
-const { queryKeyword } = useSearchCondition()
+const { multipleKeyword } = useSearchCondition()
 const { onInputEnterKeyup } = useSearchResult()
 
 const { auth } = useStore()
@@ -62,26 +62,29 @@ const handlers = {
         />
       </router-link>
       <div p="x-2">
+        <h1 text="base" font="bold">{{ appName }}</h1>
         <p text="xs">{{ appDesc }}</p>
-        <h1 text="md" font="bold">{{ appName }}</h1>
       </div>
     </div>
     <div flex="~" justify="center">
-      <n-input
-        w="![420px]"
-        clearable
-        v-model:value="queryKeyword"
-        placeholder="输入域名回车以检索"
-        :input-props="{
-          onKeyup: handlers.onInputEnterKeyup,
-        }"
-      >
-        <template #prefix>
+      <!-- <template #prefix>
           <n-icon>
             <icon-clarity-search-line />
           </n-icon>
-        </template>
-      </n-input>
+        </template> -->
+      <n-select
+        v-model:value="multipleKeyword"
+        filterable
+        multiple
+        tag
+        clearable
+        placeholder="输入（若干）IP地址、地址范围或CIDR段，回车开始测绘"
+        :show-arrow="false"
+        :show="false"
+        :input-props="{
+          onKeyup: handlers.onInputEnterKeyup,
+        }"
+      />
     </div>
     <div flex="~" justify="end">
       <n-dropdown

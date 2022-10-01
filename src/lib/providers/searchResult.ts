@@ -1,170 +1,136 @@
-import type { Ref, VNodeChild } from 'vue'
-import { RouterLink } from 'vue-router'
-import {
-  DataTableColumns,
-  PaginationInfo,
-  NTag,
-  NButton,
-  useMessage,
-  useLoadingBar,
-} from 'naive-ui'
-import {
-  domainStatus,
-  domainStatusColor,
-  domainCate,
-  domainCateColor,
-} from '@/lib/mappings'
+import type { Ref } from 'vue'
+import { useMessage, useLoadingBar } from 'naive-ui'
 
 const searchResultSymbol = Symbol()
 
-interface Pagination {
-  page: number
-  pageSize: number
-  itemCount: number
-  prefix: (info: PaginationInfo) => VNodeChild
-  onUpdatePage: (page: number) => void
-}
-
 interface SearchResultCtx {
-  resultTableColumns: DataTableColumns<Domain>
-  resultTableLoading: Ref<boolean>
-  resultTableData: Ref<Domain[]>
-  pagination: Pagination
+  resultLoading: Ref<boolean>
+  resultData: Ref<Nullable<DNS>>
   fetchSearchResult: () => Promise<void>
   onInputEnterKeyup: (event: KeyboardEvent) => Promise<void>
-  resetPagination: () => void
 }
 
 export function provideSearchResult(
-  queryKeyword: Ref<string>,
-  selectedStatus: Ref<string>,
-  selectedCate: Ref<string>
+  multipleKeyword: Ref<string[]>
 ): SearchResultCtx {
-  const resultTableColumns: DataTableColumns<Domain> = [
-    {
-      title: '域名',
-      key: 'domain',
-      className: 'font-semibold',
-    },
-    {
-      title: '域名状态',
-      key: 'domain_status',
-      render: (rowData: Domain) => {
-        return h(
-          NTag,
-          { type: domainStatusColor[rowData.domain_status], size: 'small' },
-          { default: () => domainStatus[rowData.domain_status] }
-        )
-      },
-    },
-    {
-      title: '内容分类',
-      key: 'classification',
-      render: (rowData: Domain) => {
-        return h(
-          NTag,
-          {
-            type:
-              domainCateColor[rowData.snapshot.classification.type] ||
-              'default',
-            size: 'small',
-          },
-          {
-            default: () =>
-              domainCate[rowData.snapshot.classification.type] ||
-              rowData.snapshot.classification.type,
-          }
-        )
-      },
-    },
-    {
-      title: 'ICP 备案',
-      key: 'icp',
-      render: (rowData: Domain) => {
-        if (rowData.icp.service_licence) {
-          return h('div', { class: 'flex items-center gap-2' }, [
-            h(
-              NTag,
-              { type: 'primary', size: 'small' },
-              { default: () => rowData.icp.unit_type }
-            ),
-            h('span', {}, rowData.icp.unit_name),
-          ])
-        } else {
-          return h(NTag, { type: 'error' }, { default: () => '未备案' })
-        }
-      },
-    },
-    {
-      title: '操作',
-      key: 'operation',
-      render: (rowData: Domain) => {
-        return h(
-          RouterLink,
-          { to: { name: 'Detail', params: { domainKey: rowData.domain } } },
-          {
-            default: () =>
-              h(
-                NButton,
-                { size: 'small' },
-                {
-                  default: () => '查看详情',
-                }
-              ),
-          }
-        )
-      },
-    },
-  ]
+  const wsClient = shallowRef<Nullable<WebSocket>>(null)
 
-  const { query } = useRoute()
+  const resultLoading = ref<boolean>(false)
+  const resultData = ref<Nullable<DNS>>(null)
 
-  const resultTableLoading = ref<boolean>(false)
-  const resultTableData = ref<Domain[]>([])
-  const pagination = reactive<Pagination>({
-    page: Number(query.page) || 1,
-    pageSize: 15,
-    itemCount: 0,
-    prefix: (info: PaginationInfo) => {
-      return h(
-        'div',
-        {},
-        `共 ${info.itemCount} 条记录 - 当前页 ${resultTableData.value.length} 条`
-      )
-      // 解决 naiveui 带来的问题：只有一条记录时，endIndedx=1(startIndex=0)
-    },
-    onUpdatePage: async (page: number) => {
-      pagination.page = page
-      await handlers.fetchSearchResult()
-      router.push({ query: { page } })
-    },
-  })
-
-  const router = useRouter()
   const messageCtx = useMessage()
   const loadingBar = useLoadingBar()
 
   const handlers = {
+    createWSClient() {
+      return new Promise((resolve) => {
+        try {
+          const wsServer = `${location.protocol === 'https' ? 'wss' : 'ws'}://${
+            location.host
+          }/task`
+          wsClient.value = new WebSocket(wsServer)
+          // console.log('init', wsClient.value)
+        } catch (err) {
+          resultLoading.value = false
+          // console.log('exception', err, Object.keys(err))
+        }
+        // if (!wsClient.value)
+        //   alert('您的浏览器不支持 WebSocket')
+        if (wsClient.value) {
+          wsClient.value.onopen = () => {
+            // console.log('open', event)
+            resolve(wsClient.value)
+          }
+          wsClient.value.onclose = (event) => {
+            if (event) {
+              // setTimeout(() => {
+              //   connect()
+              // }, 10000)
+            }
+          }
+          wsClient.value.onerror = (event) => {
+            if (event) {
+              // domainLoadState.domainLoading = false
+              // domainLoadState.probeLoading = false
+              // domainLoadState.keeping = false
+              // domainLoadState.snackVisible = true
+              // domainLoadState.snackText = 'WS 连接错误，请检查服务器状态'
+              // // console.log('error', event)
+            }
+          }
+          wsClient.value.onmessage = (event) => {
+            if (event.data) {
+              //   const object = JSON.parse(event.data)
+              //   // console.log(object)
+              //   domainTarget.value = object.target
+              //   if (object.data && isArray(object.data)) {
+              //     object.data.forEach(item => {
+              //       if (item.type === 'domain_whois') {
+              //         let whois = JSON.parse(item.data)
+              //         domainState.domain_whois = Object.assign(
+              //           {},
+              //           domainState.domain_whois,
+              //           whois
+              //         )
+              //       } else if (item.type === 'rr') {
+              //         item.data.forEach(rrItem => {
+              //           if (!has(domainState.rr, rrItem.type)) {
+              //             // Vue2 无法检对象属性的增加或删除
+              //             // domainState.rr[rrItem.type] = []
+              //             Vue.set(domainState.rr, rrItem.type, [])
+              //           }
+              //           domainState.rr[rrItem.type].push(rrItem.value)
+              //         })
+              //       } else if (
+              //         !isEmpty(item.data) &&
+              //         item.type === 'domain_http_chain'
+              //       ) {
+              //         // item.type === 'domain_cert'
+              //         domainState[item.type].push(item.data)
+              //       } else if (isArray(item.data)) {
+              //         // console.log(item, domainState[item.type])
+              //         domainState[item.type] = domainState[item.type].concat(
+              //           item.data
+              //         )
+              //       } else if (!isNull(item.data)) {
+              //         domainState[item.type] = Object.assign(
+              //           {},
+              //           domainState[item.type],
+              //           item.data
+              //         )
+              //       }
+              //     })
+              //   }
+              //   domainLoadState.domainLoading = false
+              //   if (object.end) {
+              //     // console.log(object.end)
+              //     domainLoadState.probeLoading = false
+              //     domainLoadState.keeping = true
+              //     setTimeout(() => {
+              //       domainLoadState.keeping = false
+              //     }, 5000)
+              //   }
+            }
+            // console.log(domainState)
+          }
+        }
+      })
+    },
     async fetchSearchResult() {
-      resultTableLoading.value = true
+      resultLoading.value = true
       loadingBar.start()
       try {
         const { /* status, */ data } = await axios.get<AxiosResData>(
           `${import.meta.env.BASE_URL}api/search`,
           {
             params: {
-              page: pagination.page,
-              rows: pagination.pageSize,
-              status: selectedStatus.value,
-              illegal_type: selectedCate.value,
-              domain: queryKeyword.value,
+              domain: multipleKeyword.value,
             },
           }
         )
-        const { state, meta, payload } = data
+        const { state, payload } = data
         if (state === 800) {
-          pagination.itemCount = meta?.total
-          resultTableData.value = payload
+          resultData.value = payload
         }
         loadingBar.finish()
       } catch (err) {
@@ -180,7 +146,7 @@ export function provideSearchResult(
         }
         loadingBar.error()
       }
-      resultTableLoading.value = false
+      resultLoading.value = false
     },
     async onInputEnterKeyup(event: KeyboardEvent): Promise<void> {
       // 拦截回车事件
@@ -188,30 +154,20 @@ export function provideSearchResult(
       if (event.shiftKey || event.key !== 'Enter') return
       event.stopPropagation()
       event.preventDefault()
-      // 回车事件处理
-      handlers.resetPagination()
+      // 回车检索事件处理
       await handlers.fetchSearchResult()
-    },
-    // 重置分页信息，如更改检索条件时，页码重置
-    resetPagination() {
-      // router.push({ name: 'Search', query: undefined })
-      pagination.page = 1
     },
   }
 
   provide(searchResultSymbol, {
-    resultTableColumns,
-    resultTableLoading,
-    resultTableData,
-    pagination,
+    resultLoading,
+    resultData,
     ...handlers,
   })
 
   return {
-    resultTableColumns,
-    resultTableLoading,
-    resultTableData,
-    pagination,
+    resultLoading,
+    resultData,
     ...handlers,
   }
 }
