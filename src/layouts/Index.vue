@@ -3,17 +3,11 @@ import Header from './components/Header.vue'
 import Banner from './components/Banner.vue'
 import Footer from './components/Footer.vue'
 
-import {
-  provideSearchCondition,
-  provideSearchResult,
-  provideSignature,
-} from '@/lib/providers'
+import { provideSearchCondition, provideSearchResult } from '@/lib/providers'
 
 const { multipleKeyword } = provideSearchCondition()
 
 provideSearchResult(multipleKeyword)
-
-provideSignature()
 </script>
 
 <template>

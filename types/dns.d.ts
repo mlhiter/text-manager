@@ -13,3 +13,10 @@ interface DNS {
   location: string
   isp: string
 }
+
+interface WSMessage {
+  type: string
+  status?: number
+  message?: string
+  data?: DNS[]
+}

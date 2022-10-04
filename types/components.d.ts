@@ -7,8 +7,14 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    IconAkarIcons: circleCheckFill': typeof import('~icons/akar-icons/circle-check-fill')['default']
+    'IconAkarIcons:circleCheckFill': typeof import('~icons/akar-icons/circle-check-fill')['default']
+    IconAntDesign: loading3QuartersOutlined': typeof import('~icons/ant-design/loading3-quarters-outlined')['default']
+    'IconAntDesign:loading3QuartersOutlined': typeof import('~icons/ant-design/loading3-quarters-outlined')['default']
     NAvatar: typeof import('naive-ui')['NAvatar']
+    NCard: typeof import('naive-ui')['NCard']
     NConfigProvider: typeof import('naive-ui')['NConfigProvider']
+    NDivider: typeof import('naive-ui')['NDivider']
     NDropdown: typeof import('naive-ui')['NDropdown']
     NLayout: typeof import('naive-ui')['NLayout']
     NLayoutContent: typeof import('naive-ui')['NLayoutContent']
