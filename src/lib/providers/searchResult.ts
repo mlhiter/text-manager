@@ -40,7 +40,10 @@ export function provideSearchResult(
       // WS
       if (!wsClient.value) {
         try {
-          wsClient.value = await createWSClient('ws://47.104.21.0:7248/dns')
+          const url = import.meta.env.PROD
+            ? '/dns'
+            : 'ws://47.104.21.0:7248/dns'
+          wsClient.value = await createWSClient(url)
         } catch (err: any) {
           messageCtx.error(err)
           return

@@ -1,11 +1,14 @@
 export function createWSClient(url: string): Promise<Nullable<WebSocket>> {
   return new Promise((resolve, reject) => {
     try {
-      const cleanedUrl = url.startsWith('/') ? url.substring(1) : url
-      const wsServer = `${location.protocol === 'https' ? 'wss' : 'ws'}://${
-        location.host
-      }${import.meta.env.BASE_URL}${cleanedUrl}`
-      const wsClient = new WebSocket(url)
+      let wsServer = url
+      if (import.meta.env.PROD) {
+        const cleanedUrl = url.startsWith('/') ? url.substring(1) : url
+        wsServer = `${location.protocol === 'https' ? 'wss' : 'ws'}://${
+          location.host
+        }${import.meta.env.BASE_URL}${cleanedUrl}`
+      }
+      const wsClient = new WebSocket(wsServer)
       console.log(wsClient)
       wsClient.onopen = () => {
         resolve(wsClient)
@@ -26,19 +29,19 @@ export function createWSClient(url: string): Promise<Nullable<WebSocket>> {
 export function receiveWSMessage(wsClient: WebSocket): Promise<DNS[]> {
   return new Promise((resolve, reject) => {
     try {
-      // if (!wsClient) reject(null)
-      // let data: DNS[] = []
-      // wsClient.onmessage = (event) => {
-      //   if (event.data) {
-      //     const object = JSON.parse(event.data)
-      //     console.log(object)
-      //     if (object.type === 'items') {
-      //       data = data.concat(object?.data)
-      //     } else if (object.type === 'done') {
-      //       resolve(data)
-      //     }
-      //   }
-      // }
+      if (!wsClient) reject(null)
+      let data: DNS[] = []
+      wsClient.onmessage = (event) => {
+        if (event.data) {
+          const object = JSON.parse(event.data)
+          console.log(object)
+          if (object.type === 'items') {
+            data = data.concat(object?.data)
+          } else if (object.type === 'done') {
+            resolve(data)
+          }
+        }
+      }
     } catch (error) {
       reject(error)
     }
