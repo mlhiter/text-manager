@@ -41,7 +41,7 @@ export function provideSearchResult(
       if (!wsClient.value) {
         try {
           const url = import.meta.env.PROD
-            ? '/dns'
+            ? 'ws://47.104.21.0:7248/dns'
             : 'ws://47.104.21.0:7248/dns'
           wsClient.value = await createWSClient(url)
         } catch (err: any) {
@@ -59,14 +59,10 @@ export function provideSearchResult(
           wsClient.value.onmessage = (event) => {
             if (event.data) {
               const object = JSON.parse(event.data)
-              console.log(object)
-              console.log(111222)
-              console.log(resultData.value)
               if (object.type === 'items') {
                 resultData.value = resultData.value?.concat(
                   object?.data
                 ) as DNS[]
-                console.log(resultData.value)
               } else if (object.type === 'done') {
                 resultLoading.value = false
               }

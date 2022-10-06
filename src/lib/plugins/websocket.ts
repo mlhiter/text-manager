@@ -1,15 +1,14 @@
 export function createWSClient(url: string): Promise<Nullable<WebSocket>> {
   return new Promise((resolve, reject) => {
     try {
-      let wsServer = url
-      if (import.meta.env.PROD) {
-        const cleanedUrl = url.startsWith('/') ? url.substring(1) : url
-        wsServer = `${location.protocol === 'https' ? 'wss' : 'ws'}://${
-          location.host
-        }${import.meta.env.BASE_URL}${cleanedUrl}`
-      }
+      const wsServer = url
+      // if (import.meta.env.PROD) {
+      //   const cleanedUrl = url.startsWith('/') ? url.substring(1) : url
+      //   wsServer = `${location.protocol === 'https' ? 'wss' : 'ws'}://${
+      //     location.host
+      //   }${import.meta.env.BASE_URL}${cleanedUrl}`
+      // }
       const wsClient = new WebSocket(wsServer)
-      console.log(wsClient)
       wsClient.onopen = () => {
         resolve(wsClient)
       }
@@ -34,7 +33,6 @@ export function receiveWSMessage(wsClient: WebSocket): Promise<DNS[]> {
       wsClient.onmessage = (event) => {
         if (event.data) {
           const object = JSON.parse(event.data)
-          console.log(object)
           if (object.type === 'items') {
             data = data.concat(object?.data)
           } else if (object.type === 'done') {
