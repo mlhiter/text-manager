@@ -7,22 +7,6 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
-    IconAkarIcons: circleCheckFill': typeof import('~icons/akar-icons/circle-check-fill')['default']
-    'IconAkarIcons:circleCheckFill': typeof import('~icons/akar-icons/circle-check-fill')['default']
-    IconAntDesign: loading3QuartersOutlined': typeof import('~icons/ant-design/loading3-quarters-outlined')['default']
-    'IconAntDesign:loading3QuartersOutlined': typeof import('~icons/ant-design/loading3-quarters-outlined')['default']
-    NAvatar: typeof import('naive-ui')['NAvatar']
-    NConfigProvider: typeof import('naive-ui')['NConfigProvider']
-    NDataTable: typeof import('naive-ui')['NDataTable']
-    NDivider: typeof import('naive-ui')['NDivider']
-    NDropdown: typeof import('naive-ui')['NDropdown']
-    NLayout: typeof import('naive-ui')['NLayout']
-    NLayoutContent: typeof import('naive-ui')['NLayoutContent']
-    NLayoutFooter: typeof import('naive-ui')['NLayoutFooter']
-    NLayoutHeader: typeof import('naive-ui')['NLayoutHeader']
-    NLoadingBarProvider: typeof import('naive-ui')['NLoadingBarProvider']
-    NMessageProvider: typeof import('naive-ui')['NMessageProvider']
-    NSelect: typeof import('naive-ui')['NSelect']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }
