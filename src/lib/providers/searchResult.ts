@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import { useMessage } from 'naive-ui'
-import { createWSClient, receiveWSMessage } from '@/lib/plugins'
+import { createWSClient } from '@/lib/plugins'
 import { isEmpty } from 'lodash-es'
 
 const searchResultSymbol = Symbol()
@@ -18,7 +18,7 @@ export function provideSearchResult(
   const wsClient = shallowRef<Nullable<WebSocket>>(null)
 
   const resultLoading = ref<boolean>(false)
-  const resultData = ref<Nullable<DNS[]>>(null)
+  const resultData = ref<DNS[]>([])
 
   const messageCtx = useMessage()
 
@@ -40,8 +40,7 @@ export function provideSearchResult(
       // WS
       if (!wsClient.value) {
         try {
-          console.log(222)
-          wsClient.value = await createWSClient('/task')
+          wsClient.value = await createWSClient('ws://47.104.21.0:7248/dns')
         } catch (err: any) {
           messageCtx.error(err)
           return
@@ -53,11 +52,27 @@ export function provideSearchResult(
         try {
           resultLoading.value = true
           wsClient.value.send(JSON.stringify(reqData))
-          resultData.value = await receiveWSMessage(wsClient.value)
+          // resultData.value = await receiveWSMessage(wsClient.value)
+          wsClient.value.onmessage = (event) => {
+            if (event.data) {
+              const object = JSON.parse(event.data)
+              console.log(object)
+              console.log(111222)
+              console.log(resultData.value)
+              if (object.type === 'items') {
+                resultData.value = resultData.value?.concat(
+                  object?.data
+                ) as DNS[]
+                console.log(resultData.value)
+              } else if (object.type === 'done') {
+                resultLoading.value = false
+              }
+            }
+          }
         } catch (err) {
           resultLoading.value = false
         }
-        resultLoading.value = false
+        // resultLoading.value = false
       }
     },
     async onInputEnterKeyup(event: KeyboardEvent): Promise<void> {

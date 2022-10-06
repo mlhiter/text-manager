@@ -1,27 +1,9 @@
 <script lang="ts" setup>
-// import { useSearchResult } from '@/lib/providers'
-import { DataTableColumn } from 'naive-ui'
+import { useSearchResult } from '@/lib/providers'
+import { DataTableColumns } from 'naive-ui'
+const { resultData, resultLoading } = useSearchResult()
 
-// const { resultLoading, resultData } = useSearchResult()
-const resultLoading = false
-const resultData = [
-  {
-    ip: '1',
-    version: '1',
-    tcp_support: true,
-    tls_support: true,
-    https_support: true,
-    edns_support: false,
-    udp_max_size: 1,
-    dnssec_support: true,
-    validity: 1,
-    accuracy: 1,
-    confidence: 1,
-    location: '1',
-    isp: '1',
-  },
-]
-const firstColumns: Array<DataTableColumn> = [
+const firstColumns: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
@@ -33,7 +15,7 @@ const firstColumns: Array<DataTableColumn> = [
     title: '服务器版本',
     key: 'version',
     render(row: any) {
-      return h('span', {}, { default: () => row?.version })
+      return h('span', {}, { default: () => row?.version || '-' })
     },
   },
   {
@@ -73,14 +55,14 @@ const firstColumns: Array<DataTableColumn> = [
     title: '是否支持edns',
     key: 'edns_support',
     render(row: any) {
-      if (row.edns_support) {
+      if (row?.edns_support) {
         return h('span', {}, { default: () => '是' })
       } else {
         return h('span', {}, { default: () => '否' })
       }
     },
   },
-  //仅在支持edns时有效
+  // //仅在支持edns时有效
   {
     title: 'upd报文最大负载值',
     key: 'udp_max_size',
@@ -104,7 +86,7 @@ const firstColumns: Array<DataTableColumn> = [
     },
   },
 ]
-const secondColumn: Array<DataTableColumn> = [
+const secondColumn: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
@@ -113,7 +95,6 @@ const secondColumn: Array<DataTableColumn> = [
     },
   },
   {
-    //FIXME:
     title: '限制性',
     key: 'limitations',
     render(row: any) {
@@ -160,6 +141,28 @@ const secondColumn: Array<DataTableColumn> = [
     },
   },
 ]
+const firstpagination = reactive({
+  page: 1,
+  pageSize: 20,
+  onChange: (page: number) => {
+    firstpagination.page = page
+  },
+  onUpdatePageSize: (pageSize: number) => {
+    firstpagination.pageSize = pageSize
+    firstpagination.page = 1
+  },
+})
+const secondpagination = reactive({
+  page: 1,
+  pageSize: 10,
+  onChange: (page: number) => {
+    secondpagination.page = page
+  },
+  onUpdatePageSize: (pageSize: number) => {
+    secondpagination.pageSize = pageSize
+    secondpagination.page = 1
+  },
+})
 </script>
 
 <template>
@@ -182,7 +185,7 @@ const secondColumn: Array<DataTableColumn> = [
         </template>
       </div>
     </div>
-    <div grid="~ lg:rows-2 gap-6">
+    <div>
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
           <b text="base" font="semibold">发现的DNS及属性测量</b>
@@ -193,10 +196,10 @@ const secondColumn: Array<DataTableColumn> = [
         <n-divider m="!y-0" />
         <n-data-table
           :single-line="false"
-          :loading="resultLoading"
           :bordered="false"
           :columns="firstColumns"
           :data="resultData"
+          :pagination="firstpagination"
         />
       </div>
 
@@ -210,10 +213,10 @@ const secondColumn: Array<DataTableColumn> = [
         <n-divider m="!y-0" />
         <n-data-table
           :single-line="false"
-          :loading="resultLoading"
           :bordered="false"
           :columns="secondColumn"
           :data="resultData"
+          :pagination="secondpagination"
         />
       </div>
     </div>
