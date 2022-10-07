@@ -8,6 +8,8 @@ const searchResultSymbol = Symbol()
 interface SearchResultCtx {
   resultLoading: Ref<boolean>
   resultData: Ref<Nullable<DNS[]>>
+  // shallowData: Ref<Nullable<DNS[]>>
+  // deepData: Ref<Nullable<DNS[]>>
   fetchSearchResult: () => Promise<void>
   onInputEnterKeyup: (event: KeyboardEvent) => Promise<void>
 }
@@ -88,12 +90,16 @@ export function provideSearchResult(
   provide(searchResultSymbol, {
     resultLoading,
     resultData,
+    // deepData,
+    // shallowData,
     ...handlers,
   })
 
   return {
     resultLoading,
     resultData,
+    // deepData,
+    // shallowData,
     ...handlers,
   }
 }

@@ -113,11 +113,11 @@ const firstColumns: DataTableColumns<DNS> = [
     },
   },
 ]
-const secondColumn: DataTableColumns<DNS> = [
+const secondColumns: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
-    // defaultSortOrder: 'ascend',
+    defaultSortOrder: 'ascend',
     // sorter: 'default',
     sorter: (row1, row2) => {
       const ip1 = row1.ip
@@ -181,6 +181,63 @@ const secondColumn: DataTableColumns<DNS> = [
     },
   },
 ]
+const middleColumns: DataTableColumns<DNS> = [
+  {
+    title: 'DNS',
+    key: 'ip',
+    defaultSortOrder: 'ascend',
+    // sorter: 'default',
+    sorter: (row1, row2) => {
+      const ip1 = row1.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      const ip2 = row2.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      return parseFloat(ip1) - parseFloat(ip2)
+    },
+    render(row: any) {
+      return h('span', {}, { default: () => row?.ip })
+    },
+  },
+  {
+    title: '与根服务器通信的最大延迟',
+    key: 'root_delay_ms',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.root_delay_ms })
+    },
+  },
+  {
+    title: '与CN权威服务器通信的最大延迟',
+    key: 'cn_delay_ms',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.cn_delay_ms })
+    },
+  },
+  {
+    title: '与COM权威服务器通信的最大延迟',
+    key: 'com_delay_ms',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.com_delay_ms })
+    },
+  },
+  {
+    title: '有效性',
+    key: 'validity',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.validity })
+    },
+  },
+  {
+    title: '准确性',
+    key: 'accuracy',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.accuracy })
+    },
+  },
+]
 const firstPagination = reactive({
   page: 1,
   pageSize: 10,
@@ -203,7 +260,19 @@ const secondPagination = reactive({
     secondPagination.page = 1
   },
 })
+const middlePagination = reactive({
+  page: 1,
+  pageSize: 10,
+  onChange: (page: number) => {
+    middlePagination.page = page
+  },
+  onUpdatePageSize: (pageSize: number) => {
+    middlePagination.pageSize = pageSize
+    middlePagination.page = 1
+  },
+})
 
+let result = resultData.value as DNS[]
 // 统计数据声明与计算（去重后）
 const deepData = ref<DNS[]>([])
 const shallowData = ref<DNS[]>([])
@@ -215,26 +284,7 @@ const recursiveTotal = ref(0)
 const forwardAndRecursiveTotal = ref(0)
 const directTotal = ref(0)
 
-// 浅层结果去重函数(去除完全相同的项)
-function shallowUnique(arr: DNS[]) {
-  return Array.from(new Set(arr))
-}
-
-// 深层结果去重函数(将不同地点的只剩一个，也会去除完全相同的项)
-function deepUnique(arr: DNS[]) {
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = i + 1; j < arr.length; j++) {
-      if (arr[i].ip == arr[j].ip) {
-        //第一个等同于第二个，splice方法删除第二个
-        arr.splice(j, 1)
-        j--
-      }
-    }
-  }
-  return arr
-}
-
-//计算分类个数函数
+// //计算分类个数函数
 function countNum(data: DNS[]) {
   // 中转一下，防止一直归零
   let a = 0
@@ -262,15 +312,34 @@ function countNum(data: DNS[]) {
   forwardAndRecursiveTotal.value = c
   directTotal.value = d
 }
+shallowTotal.value = shallowData.value?.length as number
+deepTotal.value = deepData.value?.length as number
+countNum(deepData.value as DNS[])
+// 将去重数据放在这
+// 浅层结果去重函数(去除完全相同的项)
+function shallowUnique(arr: DNS[]) {
+  const res = new Map()
+  return arr.filter((arr) => !res.has(arr.ip) && res.set(arr.ip, 1))
+}
 
-// 数据更新
-watch(resultData, () => {
-  shallowData.value = shallowUnique(resultData.value as DNS[])
-  deepData.value = deepUnique(resultData.value as DNS[])
-  shallowTotal.value = shallowData.value?.length as number
-  deepTotal.value = deepData.value?.length as number
-  countNum(deepData.value)
-})
+// // 深层结果去重函数(将不同地点的只剩一个，也会去除完全相同的项)
+function deepUnique(arr: DNS[]) {
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = i + 1; j < arr.length; j++) {
+      if (arr[i].ip == arr[j].ip) {
+        //第一个等同于第二个，splice方法删除第二个
+        arr.splice(j, 1)
+        j--
+      }
+    }
+  }
+  return arr
+}
+deepData.value = deepUnique(result as DNS[])
+shallowData.value = shallowUnique(result as DNS[])
+// watch(resultData, () => {
+//   deepData.value = resultData.value as DNS[]
+// })
 </script>
 
 <template>
@@ -385,7 +454,7 @@ watch(resultData, () => {
       <!-- 上表 -->
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
-          <b text="base" font="semibold">发现的DNS及属性测量</b>
+          <b text="base" font="semibold">发现的DNS及其静态属性测量</b>
           <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         > -->
@@ -395,11 +464,27 @@ watch(resultData, () => {
           :single-line="false"
           :bordered="false"
           :columns="firstColumns"
-          :data="deepData"
+          :data="resultData"
           :pagination="firstPagination"
         />
       </div>
-
+      <!-- 中表 -->
+      <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
+        <div flex="~" justify="between" align="items-center" p="4">
+          <b text="base" font="semibold">发现的DNS及其动态属性测量</b>
+          <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
+          >导出数据</n-button
+        > -->
+        </div>
+        <n-divider m="!y-0" />
+        <n-data-table
+          :single-line="false"
+          :bordered="false"
+          :columns="middleColumns"
+          :data="resultData"
+          :pagination="middlePagination"
+        />
+      </div>
       <!-- 下表 -->
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
@@ -412,8 +497,8 @@ watch(resultData, () => {
         <n-data-table
           :single-line="false"
           :bordered="false"
-          :columns="secondColumn"
-          :data="shallowData"
+          :columns="secondColumns"
+          :data="resultData"
           :pagination="secondPagination"
         />
       </div>
