@@ -7,7 +7,7 @@ const searchResultSymbol = Symbol()
 
 interface SearchResultCtx {
   resultLoading: Ref<boolean>
-  resultData: Ref<Nullable<DNS[]>>
+  resultData: Ref<DNS[]>
   // shallowData: Ref<Nullable<DNS[]>>
   // deepData: Ref<Nullable<DNS[]>>
   fetchSearchResult: () => Promise<void>

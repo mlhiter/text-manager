@@ -276,8 +276,7 @@ let result = resultData.value as DNS[]
 // 统计数据声明与计算（去重后）
 const deepData = ref<DNS[]>([])
 const shallowData = ref<DNS[]>([])
-const shallowTotal = ref(0)
-const deepTotal = ref(0)
+const Total = ref(0)
 
 const forwardTotal = ref(0)
 const recursiveTotal = ref(0)
@@ -312,8 +311,7 @@ function countNum(data: DNS[]) {
   forwardAndRecursiveTotal.value = c
   directTotal.value = d
 }
-shallowTotal.value = shallowData.value?.length as number
-deepTotal.value = deepData.value?.length as number
+Total.value = deepData.value?.length as number
 countNum(deepData.value as DNS[])
 // 将去重数据放在这
 // 浅层结果去重函数(去除完全相同的项)
@@ -337,9 +335,10 @@ function deepUnique(arr: DNS[]) {
 }
 deepData.value = deepUnique(result as DNS[])
 shallowData.value = shallowUnique(result as DNS[])
-// watch(resultData, () => {
-//   deepData.value = resultData.value as DNS[]
-// })
+watch(resultData, () => {
+  countNum(resultData.value)
+  Total.value = resultData.value.length as number
+})
 </script>
 
 <template>
@@ -397,7 +396,7 @@ shallowData.value = shallowUnique(result as DNS[])
             </n-progress>
             <n-statistic m="x-10">
               <div>
-                <span text="base"> DNS总数：{{ deepTotal }} </span>
+                <span text="base"> DNS总数：{{ Total }} </span>
               </div>
             </n-statistic>
           </div>
