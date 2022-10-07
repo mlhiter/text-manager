@@ -7,6 +7,18 @@ const firstColumns: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
+    defaultSortOrder: 'ascend',
+    sorter: (row1, row2) => {
+      const ip1 = row1.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      const ip2 = row2.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      return parseFloat(ip1) - parseFloat(ip2)
+    },
     render(row: any) {
       return h('span', {}, { default: () => row?.ip })
     },
@@ -85,11 +97,38 @@ const firstColumns: DataTableColumns<DNS> = [
       }
     },
   },
+  {
+    title: '类型',
+    key: 'type',
+    render(row: any) {
+      if (row?.type == 'forward') {
+        return h('span', {}, { default: () => '转发' })
+      } else if (row?.type == 'recursive') {
+        return h('span', {}, { default: () => '递归' })
+      } else if (row?.type == 'forward&recursive') {
+        return h('span', {}, { default: () => '转发且递归' })
+      } else {
+        return h('span', {}, { default: () => '直接响应' })
+      }
+    },
+  },
 ]
 const secondColumn: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
+    defaultSortOrder: 'ascend',
+    sorter: (row1, row2) => {
+      const ip1 = row1.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      const ip2 = row2.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      return parseFloat(ip1) - parseFloat(ip2)
+    },
     render(row: any) {
       return h('span', {}, { default: () => row?.ip })
     },
@@ -141,27 +180,95 @@ const secondColumn: DataTableColumns<DNS> = [
     },
   },
 ]
-const firstpagination = reactive({
-  page: 1,
-  pageSize: 20,
-  onChange: (page: number) => {
-    firstpagination.page = page
-  },
-  onUpdatePageSize: (pageSize: number) => {
-    firstpagination.pageSize = pageSize
-    firstpagination.page = 1
-  },
-})
-const secondpagination = reactive({
+const firstPagination = reactive({
   page: 1,
   pageSize: 10,
   onChange: (page: number) => {
-    secondpagination.page = page
+    firstPagination.page = page
   },
   onUpdatePageSize: (pageSize: number) => {
-    secondpagination.pageSize = pageSize
-    secondpagination.page = 1
+    firstPagination.pageSize = pageSize
+    firstPagination.page = 1
   },
+})
+const secondPagination = reactive({
+  page: 1,
+  pageSize: 10,
+  onChange: (page: number) => {
+    secondPagination.page = page
+  },
+  onUpdatePageSize: (pageSize: number) => {
+    secondPagination.pageSize = pageSize
+    secondPagination.page = 1
+  },
+})
+
+// 统计数据声明与计算（去重后）
+const deepData = ref<DNS[]>([])
+const shallowData = ref<DNS[]>([])
+const shallowTotal = ref(0)
+const deepTotal = ref(0)
+
+const forwardTotal = ref(0)
+const recursiveTotal = ref(0)
+const forwardAndRecursiveTotal = ref(0)
+const directTotal = ref(0)
+
+// 浅层结果去重函数(去除完全相同的项)
+function shallowUnique(arr: DNS[]) {
+  return Array.from(new Set(arr))
+}
+
+// 深层结果去重函数(将不同地点的只剩一个，也会去除完全相同的项)
+function deepUnique(arr: DNS[]) {
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = i + 1; j < arr.length; j++) {
+      if (arr[i].ip == arr[j].ip) {
+        //第一个等同于第二个，splice方法删除第二个
+        arr.splice(j, 1)
+        j--
+      }
+    }
+  }
+  return arr
+}
+
+//计算分类个数函数
+function countNum(data: DNS[]) {
+  // 中转一下，防止一直归零
+  let a = 0
+  let b = 0
+  let c = 0
+  let d = 0
+  for (let i = 0; i < data.length; i++) {
+    switch (data[i].type) {
+      case 'forward':
+        a++
+        break
+      case 'recursive':
+        b++
+        break
+      case 'forward&recursive':
+        c++
+        break
+      case 'direct':
+        d++
+        break
+    }
+  }
+  forwardTotal.value = a
+  recursiveTotal.value = b
+  forwardAndRecursiveTotal.value = c
+  directTotal.value = d
+}
+
+// 数据更新
+watch(resultData, () => {
+  shallowData.value = shallowUnique(resultData.value as DNS[])
+  deepData.value = deepUnique(resultData.value as DNS[])
+  shallowTotal.value = shallowData.value?.length as number
+  deepTotal.value = deepData.value?.length as number
+  countNum(deepData.value)
 })
 </script>
 
@@ -186,6 +293,100 @@ const secondpagination = reactive({
       </div>
     </div>
     <div>
+      <!-- 统计数据 -->
+      <div flex="~ gap-6" justify="between" m="y-6">
+        <!-- DNS总数 -->
+        <div
+          flex="~ auto"
+          p="4"
+          bg="white"
+          border="rounded-sm"
+          class="custom-shadow"
+        >
+          <div>
+            <b text="base" font="semibold">DNS总数</b>
+          </div>
+          <div
+            flex="~ auto"
+            align="items-center"
+            justify="center"
+            border="rounded-sm"
+          >
+            <n-progress
+              type="circle"
+              status="info"
+              :stroke-width="0"
+              :percentage="0"
+              w="![56px]"
+              border="!rounded-1/2"
+              bg="[#f4f7fe]"
+            >
+              <n-icon size="28" color="#18a058">
+                <icon-clarity-shield-check-solid></icon-clarity-shield-check-solid>
+              </n-icon>
+            </n-progress>
+            <n-statistic m="x-10">
+              <div>
+                <span text="base"> 已探测DNS总数：{{ shallowTotal }} </span>
+              </div>
+              <div>
+                <span text="base">
+                  去重后（不考虑地点）DNS总数：{{ deepTotal }}
+                </span>
+              </div>
+            </n-statistic>
+          </div>
+        </div>
+        <!-- DNS分类 -->
+        <div
+          flex="~ auto"
+          p="4"
+          bg="white"
+          border="rounded-sm"
+          class="custom-shadow"
+        >
+          <div>
+            <b text="base" font="semibold">DNS分类</b>
+          </div>
+          <div
+            flex="~ auto"
+            align="items-center"
+            justify="center"
+            border="rounded-sm"
+          >
+            <n-progress
+              type="circle"
+              status="info"
+              :stroke-width="0"
+              :percentage="0"
+              w="![56px]"
+              border="!rounded-1/2"
+              bg="[#f4f7fe]"
+            >
+              <n-icon size="28" color="#0078d4">
+                <icon-fa-solid-globe></icon-fa-solid-globe>
+              </n-icon>
+            </n-progress>
+            <n-statistic m="x-10">
+              <div>
+                <span text="base"> 转发类：{{ forwardTotal }}</span>
+              </div>
+              <div>
+                <span text="base"> 递归类：{{ recursiveTotal }} </span>
+              </div>
+              <div>
+                <span text="base">
+                  转发且递归类：{{ forwardAndRecursiveTotal }}
+                </span>
+              </div>
+              <div>
+                <span text="base"> 直接响应类：{{ directTotal }} </span>
+              </div>
+            </n-statistic>
+          </div>
+        </div>
+      </div>
+      <!-- 上表 -->
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
           <b text="base" font="semibold">发现的DNS及属性测量</b>
@@ -198,11 +399,12 @@ const secondpagination = reactive({
           :single-line="false"
           :bordered="false"
           :columns="firstColumns"
-          :data="resultData"
-          :pagination="firstpagination"
+          :data="deepData"
+          :pagination="firstPagination"
         />
       </div>
 
+      <!-- 下表 -->
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
           <b text="base" font="semibold">基于置信度的高可用DNS</b>
@@ -215,8 +417,8 @@ const secondpagination = reactive({
           :single-line="false"
           :bordered="false"
           :columns="secondColumn"
-          :data="resultData"
-          :pagination="secondpagination"
+          :data="shallowData"
+          :pagination="secondPagination"
         />
       </div>
     </div>

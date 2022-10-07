@@ -7,6 +7,7 @@ interface DNS {
   edns_support: boolean
   udp_max_size: number
   dnssec_support: boolean
+  type: 'forward' | 'recursive' | 'forward&recursive' | 'direct'
   validity: number
   accuracy: number
   confidence: number
