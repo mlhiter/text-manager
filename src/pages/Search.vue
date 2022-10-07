@@ -117,7 +117,8 @@ const secondColumn: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
-    defaultSortOrder: 'ascend',
+    // defaultSortOrder: 'ascend',
+    // sorter: 'default',
     sorter: (row1, row2) => {
       const ip1 = row1.ip
         .split('.')
@@ -327,12 +328,7 @@ watch(resultData, () => {
             </n-progress>
             <n-statistic m="x-10">
               <div>
-                <span text="base"> 已探测DNS总数：{{ shallowTotal }} </span>
-              </div>
-              <div>
-                <span text="base">
-                  去重后（不考虑地点）DNS总数：{{ deepTotal }}
-                </span>
+                <span text="base"> DNS总数：{{ deepTotal }} </span>
               </div>
             </n-statistic>
           </div>
