@@ -8,11 +8,14 @@ interface DNS {
   udp_max_size: number
   dnssec_support: boolean
   type: 'forward' | 'recursive' | 'forward&recursive' | 'direct'
+  root_delay_ms: number
+  cn_delay_ms: number
+  com_delay_ms: number
   validity: number
   accuracy: number
-  confidence: number
-  location: string
-  isp: string
+  confidence?: number
+  location?: string
+  isp?: string
 }
 
 interface WSMessage {

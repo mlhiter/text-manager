@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { useSearchResult } from '@/lib/providers'
-import { DataTableColumns } from 'naive-ui'
+import { DataTableColumns, useMessage } from 'naive-ui'
+import { saveAs } from 'file-saver'
+
 const { resultData, resultLoading } = useSearchResult()
+const message = useMessage()
 
 const firstColumns: DataTableColumns<DNS> = [
   {
@@ -333,7 +336,6 @@ function countNum(data: DNS[]) {
   forwardAndRecursiveTotal.value = c
   directTotal.value = d
 }
-// 将去重数据放在这
 // 浅层结果去重函数(去除完全相同的项)
 function shallowUnique(arr: DNS[]) {
   let reviseArr = arr
@@ -354,6 +356,36 @@ watch(shallowData, () => {
   Total.value = deepData.value.length as number
   countNum(deepData.value as DNS[])
 })
+
+// 处理保存数据函数
+function dealData(data: DNS[]) {
+  let strData =
+    'ip,version,tcp_support,tls_support,https_support,edns_support,udp_max_size,dnssec_support,type,root_delay_ms,cn_delay_ms,com_delay_ms,validity,accuracy\n'
+  // 筛选数据去除无关项
+  data.forEach((obj) => {
+    delete obj.confidence
+    delete obj.location
+    delete obj.isp
+    // 去除键和括号
+    strData = strData.concat(Object.values(obj).join(',') + '\n')
+  })
+  console.log(strData)
+  return strData
+}
+
+//导出数据函数
+const exportResult = async () => {
+  try {
+    const unDealData = deepData.value
+    const stringResult = dealData(unDealData)
+    const file = new File([stringResult], 'data.txt', {
+      type: 'text/plain;charset=utf-8',
+    })
+    saveAs(file)
+  } catch (err: any) {
+    message.error(`[导出]数据服务异常，请联系管理员！${err.message}`)
+  }
+}
 </script>
 
 <template>
@@ -469,9 +501,9 @@ watch(shallowData, () => {
       <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
         <div flex="~" justify="between" align="items-center" p="4">
           <b text="base" font="semibold">发现的DNS及其静态属性测量</b>
-          <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
-          >导出数据</n-button
-        > -->
+          <n-button type="primary" size="small" @click="exportResult"
+            >导出数据</n-button
+          >
         </div>
         <n-divider m="!y-0" />
         <n-data-table
