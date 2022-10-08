@@ -203,24 +203,46 @@ const middleColumns: DataTableColumns<DNS> = [
     },
   },
   {
-    title: '与根服务器通信的最大延迟',
-    key: 'root_delay_ms',
+    title: '解析时延（ms）',
+    key: 'analyticDelay',
     render(row: any) {
-      return h('span', {}, { default: () => row?.root_delay_ms })
-    },
-  },
-  {
-    title: '与CN权威服务器通信的最大延迟',
-    key: 'cn_delay_ms',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.cn_delay_ms })
-    },
-  },
-  {
-    title: '与COM权威服务器通信的最大延迟',
-    key: 'com_delay_ms',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.com_delay_ms })
+      // return h('span', {}, { default: () => row?.root_delay_ms })
+      if (row.cn_delay_ms != 0 && row.com_delay_ms != 0) {
+        return h(
+          'span',
+          {},
+          {
+            default: () =>
+              ((row.cn_delay_ms + row.com_delay_ms) / 2).toFixed(4),
+          }
+        )
+      } else if (row.cn_delay_ms == 0 && row.com_delay_ms == 0) {
+        return h(
+          'span',
+          {},
+          {
+            default: () => '<0.1',
+          }
+        )
+      } else {
+        if (row.cn_delay_ms != 0) {
+          return h(
+            'span',
+            {},
+            {
+              default: () => row.cn_delay_ms.toFixed(4),
+            }
+          )
+        } else {
+          return h(
+            'span',
+            {},
+            {
+              default: () => row.com_delay_ms.toFixed(4),
+            }
+          )
+        }
+      }
     },
   },
   {
