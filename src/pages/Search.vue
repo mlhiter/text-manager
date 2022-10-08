@@ -272,10 +272,10 @@ const middlePagination = reactive({
   },
 })
 
-let result = resultData.value as DNS[]
 // 统计数据声明与计算（去重后）
 const deepData = ref<DNS[]>([])
 const shallowData = ref<DNS[]>([])
+
 const Total = ref(0)
 
 const forwardTotal = ref(0)
@@ -311,33 +311,26 @@ function countNum(data: DNS[]) {
   forwardAndRecursiveTotal.value = c
   directTotal.value = d
 }
-Total.value = deepData.value?.length as number
-countNum(deepData.value as DNS[])
 // 将去重数据放在这
 // 浅层结果去重函数(去除完全相同的项)
 function shallowUnique(arr: DNS[]) {
-  const res = new Map()
-  return arr.filter((arr) => !res.has(arr.ip) && res.set(arr.ip, 1))
+  let reviseArr = arr
+  return Array.from(new Set(reviseArr))
 }
 
 // // 深层结果去重函数(将不同地点的只剩一个，也会去除完全相同的项)
 function deepUnique(arr: DNS[]) {
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = i + 1; j < arr.length; j++) {
-      if (arr[i].ip == arr[j].ip) {
-        //第一个等同于第二个，splice方法删除第二个
-        arr.splice(j, 1)
-        j--
-      }
-    }
-  }
-  return arr
+  let aArr = arr
+  const res = new Map()
+  return aArr.filter((aArr) => !res.has(aArr.ip) && res.set(aArr.ip, 1))
 }
-deepData.value = deepUnique(result as DNS[])
-shallowData.value = shallowUnique(result as DNS[])
 watch(resultData, () => {
-  countNum(resultData.value)
-  Total.value = resultData.value.length as number
+  shallowData.value = shallowUnique(resultData.value as DNS[])
+})
+watch(shallowData, () => {
+  deepData.value = deepUnique(shallowData.value as DNS[])
+  Total.value = deepData.value.length as number
+  countNum(deepData.value as DNS[])
 })
 </script>
 
@@ -463,7 +456,7 @@ watch(resultData, () => {
           :single-line="false"
           :bordered="false"
           :columns="firstColumns"
-          :data="resultData"
+          :data="deepData"
           :pagination="firstPagination"
         />
       </div>
@@ -480,7 +473,7 @@ watch(resultData, () => {
           :single-line="false"
           :bordered="false"
           :columns="middleColumns"
-          :data="resultData"
+          :data="deepData"
           :pagination="middlePagination"
         />
       </div>
@@ -497,7 +490,7 @@ watch(resultData, () => {
           :single-line="false"
           :bordered="false"
           :columns="secondColumns"
-          :data="resultData"
+          :data="shallowData"
           :pagination="secondPagination"
         />
       </div>
