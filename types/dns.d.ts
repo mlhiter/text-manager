@@ -7,7 +7,7 @@ interface DNS {
   edns_support: boolean
   udp_max_size: number
   dnssec_support: boolean
-  type: 'forward' | 'recursive' | 'forward&recursive' | 'direct'
+  type: keyof DNSDist
   root_delay_ms: number
   cn_delay_ms: number
   com_delay_ms: number
@@ -16,6 +16,13 @@ interface DNS {
   confidence?: number
   location?: string
   isp?: string
+}
+
+interface DNSDist {
+  forward: number
+  recursive: number
+  'forward&recursive': number
+  direct: number
 }
 
 interface WSMessage {

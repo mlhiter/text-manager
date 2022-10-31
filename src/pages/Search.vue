@@ -2,11 +2,18 @@
 import { useSearchResult } from '@/lib/providers'
 import { DataTableColumns, useMessage } from 'naive-ui'
 import { saveAs } from 'file-saver'
+import { formatNumber } from '@/lib/utils'
 
-const { resultData, resultLoading } = useSearchResult()
+const {
+  preCleanedData,
+  postCleanedData,
+  totalCount,
+  loadingVisible,
+  resultLoading,
+} = useSearchResult()
 const message = useMessage()
 
-const firstColumns: DataTableColumns<DNS> = [
+const dnsStaticColumns: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
@@ -116,75 +123,7 @@ const firstColumns: DataTableColumns<DNS> = [
     },
   },
 ]
-const secondColumns: DataTableColumns<DNS> = [
-  {
-    title: 'DNS',
-    key: 'ip',
-    defaultSortOrder: 'ascend',
-    // sorter: 'default',
-    sorter: (row1, row2) => {
-      const ip1 = row1.ip
-        .split('.')
-        .map((e) => e.padStart(3, '0'))
-        .join('')
-      const ip2 = row2.ip
-        .split('.')
-        .map((e) => e.padStart(3, '0'))
-        .join('')
-      return parseFloat(ip1) - parseFloat(ip2)
-    },
-    render(row: any) {
-      return h('span', {}, { default: () => row?.ip })
-    },
-  },
-  {
-    title: '限制性',
-    key: 'limitations',
-    render(row: any) {
-      if (row.validity == 1) {
-        return h('span', {}, { default: () => '未受限' })
-      } else {
-        return h('span', {}, { default: () => '受限' })
-      }
-    },
-  },
-  {
-    title: '有效性',
-    key: 'validity',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.validity })
-    },
-  },
-  {
-    title: '准确性',
-    key: 'accuracy',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.accuracy })
-    },
-  },
-  {
-    title: '置信度',
-    key: 'confidence',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.confidence })
-    },
-  },
-  {
-    title: '地区',
-    key: 'location',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.location })
-    },
-  },
-  {
-    title: 'ISP',
-    key: 'isp',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.isp })
-    },
-  },
-]
-const middleColumns: DataTableColumns<DNS> = [
+const dnsDynamicColumns: DataTableColumns<DNS> = [
   {
     title: 'DNS',
     key: 'ip',
@@ -263,98 +202,109 @@ const middleColumns: DataTableColumns<DNS> = [
     },
   },
 ]
-const firstPagination = reactive({
+const haDNSColumns: DataTableColumns<DNS> = [
+  {
+    title: 'DNS',
+    key: 'ip',
+    defaultSortOrder: 'ascend',
+    // sorter: 'default',
+    sorter: (row1, row2) => {
+      const ip1 = row1.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      const ip2 = row2.ip
+        .split('.')
+        .map((e) => e.padStart(3, '0'))
+        .join('')
+      return parseFloat(ip1) - parseFloat(ip2)
+    },
+    render(row: any) {
+      return h('span', {}, { default: () => row?.ip })
+    },
+  },
+  {
+    title: '限制性',
+    key: 'limitations',
+    render(row: any) {
+      if (row.validity == 1) {
+        return h('span', {}, { default: () => '未受限' })
+      } else {
+        return h('span', {}, { default: () => '受限' })
+      }
+    },
+  },
+  {
+    title: '有效性',
+    key: 'validity',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.validity })
+    },
+  },
+  {
+    title: '准确性',
+    key: 'accuracy',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.accuracy })
+    },
+  },
+  {
+    title: '置信度',
+    key: 'confidence',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.confidence })
+    },
+  },
+  {
+    title: '地区',
+    key: 'location',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.location })
+    },
+  },
+  {
+    title: 'ISP',
+    key: 'isp',
+    render(row: any) {
+      return h('span', {}, { default: () => row?.isp })
+    },
+  },
+]
+
+const dnsStaticPagination = reactive({
   page: 1,
   pageSize: 10,
   onChange: (page: number) => {
-    firstPagination.page = page
+    dnsStaticPagination.page = page
   },
   onUpdatePageSize: (pageSize: number) => {
-    firstPagination.pageSize = pageSize
-    firstPagination.page = 1
+    dnsStaticPagination.pageSize = pageSize
+    dnsStaticPagination.page = 1
   },
 })
-const secondPagination = reactive({
+
+const dynamicPagination = reactive({
   page: 1,
   pageSize: 10,
   onChange: (page: number) => {
-    secondPagination.page = page
+    dynamicPagination.page = page
   },
   onUpdatePageSize: (pageSize: number) => {
-    secondPagination.pageSize = pageSize
-    secondPagination.page = 1
+    dynamicPagination.pageSize = pageSize
+    dynamicPagination.page = 1
   },
 })
-const middlePagination = reactive({
+
+const haDNSPagination = reactive({
   page: 1,
   pageSize: 10,
   onChange: (page: number) => {
-    middlePagination.page = page
+    haDNSPagination.page = page
   },
   onUpdatePageSize: (pageSize: number) => {
-    middlePagination.pageSize = pageSize
-    middlePagination.page = 1
+    haDNSPagination.pageSize = pageSize
+    haDNSPagination.page = 1
   },
-})
-
-// 统计数据声明与计算（去重后）
-const deepData = ref<DNS[]>([])
-const shallowData = ref<DNS[]>([])
-
-const Total = ref(0)
-
-const forwardTotal = ref(0)
-const recursiveTotal = ref(0)
-const forwardAndRecursiveTotal = ref(0)
-const directTotal = ref(0)
-
-// //计算分类个数函数
-function countNum(data: DNS[]) {
-  // 中转一下，防止一直归零
-  let a = 0
-  let b = 0
-  let c = 0
-  let d = 0
-  for (let i = 0; i < data.length; i++) {
-    switch (data[i].type) {
-      case 'forward':
-        a++
-        break
-      case 'recursive':
-        b++
-        break
-      case 'forward&recursive':
-        c++
-        break
-      case 'direct':
-        d++
-        break
-    }
-  }
-  forwardTotal.value = a
-  recursiveTotal.value = b
-  forwardAndRecursiveTotal.value = c
-  directTotal.value = d
-}
-// 浅层结果去重函数(去除完全相同的项)
-function shallowUnique(arr: DNS[]) {
-  let reviseArr = arr
-  return Array.from(new Set(reviseArr))
-}
-
-// // 深层结果去重函数(将不同地点的只剩一个，也会去除完全相同的项)
-function deepUnique(arr: DNS[]) {
-  let aArr = arr
-  const res = new Map()
-  return aArr.filter((aArr) => !res.has(aArr.ip) && res.set(aArr.ip, 1))
-}
-watch(resultData, () => {
-  shallowData.value = shallowUnique(resultData.value as DNS[])
-})
-watch(shallowData, () => {
-  deepData.value = deepUnique(shallowData.value as DNS[])
-  Total.value = deepData.value.length as number
-  countNum(deepData.value as DNS[])
 })
 
 // 处理保存数据函数
@@ -376,7 +326,7 @@ function dealData(data: DNS[]) {
 //导出数据函数
 const exportResult = async () => {
   try {
-    const unDealData = deepData.value
+    const unDealData = postCleanedData.value
     const stringResult = dealData(unDealData)
     const file = new File([stringResult], 'data.txt', {
       type: 'text/plain;charset=utf-8',
@@ -392,7 +342,13 @@ const exportResult = async () => {
   <div class="animation">
     <div flex="~" justify="between" align="items-baseline" p="b-6" text="white">
       <div flex="~" align="items-center">
-        <b p="x-2" text="4xl" font="semibold">探测结果</b>
+        <p text="xl">
+          <span>已发现 DNS</span>
+          <b p="x-2" text="4xl" font="semibold">
+            {{ formatNumber(totalCount) }}
+          </b>
+          <span>个</span>
+        </p>
       </div>
       <div flex="~ gap-2" align="items-center">
         <template v-if="resultLoading">
@@ -402,152 +358,64 @@ const exportResult = async () => {
           />
           <b style="margin-top: 2px">探测中...</b>
         </template>
-        <template v-else>
+        <template v-else-if="loadingVisible">
           <icon-akar-icons:circle-check-fill text="base" />
           <b style="margin-top: 2px">探测完成</b>
         </template>
       </div>
     </div>
-    <div>
-      <!-- 统计数据 -->
-      <div flex="~ gap-6" justify="between" m="y-6">
-        <!-- DNS总数 -->
-        <div
-          flex="~ auto"
-          p="4"
-          bg="white"
-          border="rounded-sm"
-          class="custom-shadow"
+    <!-- 统计数据：分类 -->
+    <CateDist />
+    <!-- 上：静态属性 -->
+    <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
+      <div flex="~" justify="between" align="items-center" p="4">
+        <b text="base" font="semibold">发现的DNS及其静态属性测量</b>
+        <n-button type="primary" size="small" @click="exportResult"
+          >导出数据</n-button
         >
-          <div>
-            <b text="base" font="semibold">DNS总数</b>
-          </div>
-          <div
-            flex="~ auto"
-            align="items-center"
-            justify="center"
-            border="rounded-sm"
-          >
-            <n-progress
-              type="circle"
-              status="info"
-              :stroke-width="0"
-              :percentage="0"
-              w="![56px]"
-              border="!rounded-1/2"
-              bg="[#f4f7fe]"
-            >
-              <n-icon size="28" color="#18a058">
-                <icon-clarity-shield-check-solid></icon-clarity-shield-check-solid>
-              </n-icon>
-            </n-progress>
-            <n-statistic m="x-10">
-              <div>
-                <span text="base"> DNS总数：{{ Total }} </span>
-              </div>
-            </n-statistic>
-          </div>
-        </div>
-        <!-- DNS分类 -->
-        <div
-          flex="~ auto"
-          p="4"
-          bg="white"
-          border="rounded-sm"
-          class="custom-shadow"
-        >
-          <div>
-            <b text="base" font="semibold">DNS分类</b>
-          </div>
-          <div
-            flex="~ auto"
-            align="items-center"
-            justify="center"
-            border="rounded-sm"
-          >
-            <n-progress
-              type="circle"
-              status="info"
-              :stroke-width="0"
-              :percentage="0"
-              w="![56px]"
-              border="!rounded-1/2"
-              bg="[#f4f7fe]"
-            >
-              <n-icon size="28" color="#0078d4">
-                <icon-fa-solid-globe></icon-fa-solid-globe>
-              </n-icon>
-            </n-progress>
-            <n-statistic m="x-10">
-              <div>
-                <span text="base"> 转发类：{{ forwardTotal }}</span>
-              </div>
-              <div>
-                <span text="base"> 递归类：{{ recursiveTotal }} </span>
-              </div>
-              <div>
-                <span text="base">
-                  转发且递归类：{{ forwardAndRecursiveTotal }}
-                </span>
-              </div>
-              <div>
-                <span text="base"> 直接响应类：{{ directTotal }} </span>
-              </div>
-            </n-statistic>
-          </div>
-        </div>
       </div>
-      <!-- 上表 -->
-      <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
-        <div flex="~" justify="between" align="items-center" p="4">
-          <b text="base" font="semibold">发现的DNS及其静态属性测量</b>
-          <n-button type="primary" size="small" @click="exportResult"
-            >导出数据</n-button
-          >
-        </div>
-        <n-divider m="!y-0" />
-        <n-data-table
-          :single-line="false"
-          :bordered="false"
-          :columns="firstColumns"
-          :data="deepData"
-          :pagination="firstPagination"
-        />
-      </div>
-      <!-- 中表 -->
-      <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
-        <div flex="~" justify="between" align="items-center" p="4">
-          <b text="base" font="semibold">发现的DNS及其动态属性测量</b>
-          <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
+      <n-divider m="!y-0" />
+      <n-data-table
+        :single-line="false"
+        :bordered="false"
+        :columns="dnsStaticColumns"
+        :data="postCleanedData"
+        :pagination="dnsStaticPagination"
+      />
+    </div>
+    <!-- 中：动态属性 -->
+    <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
+      <div flex="~" justify="between" align="items-center" p="4">
+        <b text="base" font="semibold">发现的DNS及其动态属性测量</b>
+        <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         > -->
-        </div>
-        <n-divider m="!y-0" />
-        <n-data-table
-          :single-line="false"
-          :bordered="false"
-          :columns="middleColumns"
-          :data="deepData"
-          :pagination="middlePagination"
-        />
       </div>
-      <!-- 下表 -->
-      <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
-        <div flex="~" justify="between" align="items-center" p="4">
-          <b text="base" font="semibold">基于置信度的高可用DNS</b>
-          <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
+      <n-divider m="!y-0" />
+      <n-data-table
+        :single-line="false"
+        :bordered="false"
+        :columns="dnsDynamicColumns"
+        :data="postCleanedData"
+        :pagination="dynamicPagination"
+      />
+    </div>
+    <!-- 下：高可用 -->
+    <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
+      <div flex="~" justify="between" align="items-center" p="4">
+        <b text="base" font="semibold">基于置信度的高可用DNS</b>
+        <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         > -->
-        </div>
-        <n-divider m="!y-0" />
-        <n-data-table
-          :single-line="false"
-          :bordered="false"
-          :columns="secondColumns"
-          :data="shallowData"
-          :pagination="secondPagination"
-        />
       </div>
+      <n-divider m="!y-0" />
+      <n-data-table
+        :single-line="false"
+        :bordered="false"
+        :columns="haDNSColumns"
+        :data="preCleanedData"
+        :pagination="haDNSPagination"
+      />
     </div>
   </div>
 </template>

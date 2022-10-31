@@ -1,16 +1,25 @@
 import type { Ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { createWSClient } from '@/lib/plugins'
-import { isEmpty } from 'lodash-es'
+import {
+  isEmpty,
+  uniq,
+  uniqBy,
+  countBy,
+  /* , uniqWith, isEqual */
+} from 'lodash-es'
 
 const searchResultSymbol = Symbol()
 
 interface SearchResultCtx {
+  loadingVisible: Ref<boolean>
   resultLoading: Ref<boolean>
   resultData: Ref<DNS[]>
-  // shallowData: Ref<Nullable<DNS[]>>
-  // deepData: Ref<Nullable<DNS[]>>
+  preCleanedData: Ref<DNS[]>
+  postCleanedData: Ref<DNS[]>
   fetchSearchResult: () => Promise<void>
+  totalCount: Ref<number>
+  cateDistCount: Ref<DNSDist>
   onInputEnterKeyup: (event: KeyboardEvent) => Promise<void>
 }
 
@@ -19,8 +28,33 @@ export function provideSearchResult(
 ): SearchResultCtx {
   const wsClient = shallowRef<Nullable<WebSocket>>(null)
 
+  const loadingVisible = ref<boolean>(false)
+
   const resultLoading = ref<boolean>(false)
   const resultData = ref<DNS[]>([])
+
+  // 粗过滤，提出完全一样的
+  const preCleanedData = computed(() => uniq(resultData.value)) // uniqWith(resultData.value, isEqual)
+
+  // 根据 IP 去重
+  const postCleanedData = computed(() =>
+    uniqBy(resultData.value, (item) => item.ip)
+  )
+
+  const totalCount = computed(() => postCleanedData.value.length)
+
+  // 分类统数量
+  const cateDistCount = computed(() =>
+    Object.assign(
+      {
+        direct: 0,
+        forward: 0,
+        recursive: 0,
+        'forward&recursive': 0,
+      },
+      countBy(postCleanedData.value, (item) => item.type)
+    )
+  )
 
   const messageCtx = useMessage()
 
@@ -55,6 +89,7 @@ export function provideSearchResult(
       // 检索
       if (wsClient.value?.readyState === WebSocket.OPEN) {
         try {
+          loadingVisible.value = true
           resultLoading.value = true
           wsClient.value.send(JSON.stringify(reqData))
           // resultData.value = await receiveWSMessage(wsClient.value)
@@ -88,18 +123,24 @@ export function provideSearchResult(
   }
 
   provide(searchResultSymbol, {
+    loadingVisible,
     resultLoading,
     resultData,
-    // deepData,
-    // shallowData,
+    preCleanedData,
+    postCleanedData,
+    totalCount,
+    cateDistCount,
     ...handlers,
   })
 
   return {
+    loadingVisible,
     resultLoading,
     resultData,
-    // deepData,
-    // shallowData,
+    preCleanedData,
+    postCleanedData,
+    totalCount,
+    cateDistCount,
     ...handlers,
   }
 }
