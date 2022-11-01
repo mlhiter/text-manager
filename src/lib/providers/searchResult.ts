@@ -94,6 +94,8 @@ export function provideSearchResult(
         }
       }
 
+      resultData.value = [] // 重置
+
       // 检索
       if (wsClient.value?.readyState === WebSocket.OPEN) {
         try {

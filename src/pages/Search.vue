@@ -347,7 +347,11 @@ const handlers = {
     <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
       <div flex="~" justify="between" align="items-center" p="4">
         <b text="base" font="semibold">DNS 静态属性测量</b>
-        <n-button type="primary" size="small" @click="handlers.exportResult"
+        <n-button
+          v-if="totalCount && !resultLoading"
+          type="primary"
+          size="small"
+          @click="handlers.exportResult"
           >导出数据</n-button
         >
       </div>
