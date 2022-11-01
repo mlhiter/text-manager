@@ -2,11 +2,14 @@
 import { useSearchResult } from '@/lib/providers'
 import { DataTableColumns, useMessage } from 'naive-ui'
 import { saveAs } from 'file-saver'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, transformCSV } from '@/lib/utils'
+import { dnsCates } from '@/lib/mappings'
+import Yes from '~icons/dashicons/yes'
+import NoAlt from '~icons/dashicons/no-alt'
 
 const {
-  preCleanedData,
   postCleanedData,
+  haCleanedData,
   totalCount,
   loadingVisible,
   resultLoading,
@@ -29,96 +32,105 @@ const dnsStaticColumns: DataTableColumns<DNS> = [
         .join('')
       return parseFloat(ip1) - parseFloat(ip2)
     },
-    render(row: any) {
-      return h('span', {}, { default: () => row?.ip })
-    },
   },
   {
     title: '服务器版本',
     key: 'version',
-    render(row: any) {
+    render(row) {
       return h('span', {}, { default: () => row?.version || '-' })
-    },
-  },
-  {
-    title: '是否支持tcp',
-    key: 'tcp_support',
-    render(row: any) {
-      if (row?.tcp_support) {
-        return h('span', {}, { default: () => '是' })
-      } else {
-        return h('span', {}, { default: () => '否' })
-      }
-    },
-  },
-  {
-    title: '是否支持tls',
-    key: 'tls_support',
-    render(row: any) {
-      if (row?.tls_support) {
-        return h('span', {}, { default: () => '是' })
-      } else {
-        return h('span', {}, { default: () => '否' })
-      }
-    },
-  },
-  {
-    title: '是否支持https',
-    key: 'https_support',
-    render(row: any) {
-      if (row?.https_support) {
-        return h('span', {}, { default: () => '是' })
-      } else {
-        return h('span', {}, { default: () => '否' })
-      }
-    },
-  },
-  {
-    title: '是否支持edns',
-    key: 'edns_support',
-    render(row: any) {
-      if (row?.edns_support) {
-        return h('span', {}, { default: () => '是' })
-      } else {
-        return h('span', {}, { default: () => '否' })
-      }
-    },
-  },
-  // //仅在支持edns时有效
-  {
-    title: 'upd报文最大负载值',
-    key: 'udp_max_size',
-    render(row: any) {
-      if (row.edns_support) {
-        return h('span', {}, { default: () => row?.udp_max_size })
-      } else {
-        return h('span', {}, { default: () => '无意义' })
-      }
-    },
-  },
-  {
-    title: '是否支持dnssec',
-    key: 'dnssec_support',
-    render(row: any) {
-      if (row?.dnssec_support) {
-        return h('span', {}, { default: () => '是' })
-      } else {
-        return h('span', {}, { default: () => '否' })
-      }
     },
   },
   {
     title: '类型',
     key: 'type',
-    render(row: any) {
-      if (row?.type == 'forward') {
-        return h('span', {}, { default: () => '转发' })
-      } else if (row?.type == 'recursive') {
-        return h('span', {}, { default: () => '递归' })
-      } else if (row?.type == 'forward&recursive') {
-        return h('span', {}, { default: () => '转发且递归' })
+    render(row) {
+      return h('span', {}, { default: () => dnsCates[row.type] })
+    },
+  },
+  {
+    title: 'TCP 支持',
+    key: 'tcp_support',
+    render(row) {
+      if (row?.tcp_support) {
+        return h(Yes, {
+          class: ['text-success', 'text-xl', 'font-medium', 'align-middle'],
+        })
       } else {
-        return h('span', {}, { default: () => '直接响应' })
+        return h(NoAlt, {
+          class: ['text-error', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      }
+    },
+  },
+  {
+    title: 'TLS 支持',
+    key: 'tls_support',
+    render(row) {
+      if (row?.tls_support) {
+        return h(Yes, {
+          class: ['text-success', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      } else {
+        return h(NoAlt, {
+          class: ['text-error', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      }
+    },
+  },
+  {
+    title: 'HTTPS 支持',
+    key: 'https_support',
+    render(row) {
+      if (row?.https_support) {
+        return h(Yes, {
+          class: ['text-success', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      } else {
+        return h(NoAlt, {
+          class: ['text-error', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      }
+    },
+  },
+  {
+    title: 'DNSSEC 支持',
+    key: 'dnssec_support',
+    render(row) {
+      if (row?.dnssec_support) {
+        return h(Yes, {
+          class: ['text-success', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      } else {
+        return h(NoAlt, {
+          class: ['text-error', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      }
+    },
+  },
+  {
+    title: 'EDNS 支持',
+    key: 'edns_support',
+    render(row) {
+      if (row?.edns_support) {
+        return h(Yes, {
+          class: ['text-success', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      } else {
+        return h(NoAlt, {
+          class: ['text-error', 'text-xl', 'font-medium', 'align-middle'],
+        })
+      }
+    },
+  },
+  // 仅在支持edns时有效
+  {
+    title: 'UDP 报文最大负载值',
+    key: 'udp_max_size',
+    render(row) {
+      if (row.edns_support) {
+        return h('span', {}, { default: () => row?.udp_max_size })
+      } else {
+        return h('span', {}, { default: () => '无意义' })
       }
     },
   },
@@ -140,14 +152,14 @@ const dnsDynamicColumns: DataTableColumns<DNS> = [
         .join('')
       return parseFloat(ip1) - parseFloat(ip2)
     },
-    render(row: any) {
+    render(row) {
       return h('span', {}, { default: () => row?.ip })
     },
   },
   {
-    title: '解析时延（ms）',
+    title: '解析时延（毫秒）',
     key: 'analyticDelay',
-    render(row: any) {
+    render(row) {
       // return h('span', {}, { default: () => row?.root_delay_ms })
       if (row.cn_delay_ms != 0 && row.com_delay_ms != 0) {
         return h(
@@ -190,16 +202,10 @@ const dnsDynamicColumns: DataTableColumns<DNS> = [
   {
     title: '有效性',
     key: 'validity',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.validity })
-    },
   },
   {
     title: '准确性',
     key: 'accuracy',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.accuracy })
-    },
   },
 ]
 const haDNSColumns: DataTableColumns<DNS> = [
@@ -219,55 +225,37 @@ const haDNSColumns: DataTableColumns<DNS> = [
         .join('')
       return parseFloat(ip1) - parseFloat(ip2)
     },
-    render(row: any) {
+    render(row) {
       return h('span', {}, { default: () => row?.ip })
     },
   },
   {
     title: '限制性',
     key: 'limitations',
-    render(row: any) {
-      if (row.validity == 1) {
-        return h('span', {}, { default: () => '未受限' })
-      } else {
-        return h('span', {}, { default: () => '受限' })
-      }
+    render(row) {
+      return h(
+        'span',
+        {},
+        {
+          default: () =>
+            `${row.validity === 1 ? '未' : ''}受限（探测点：${row.location} ${
+              row.isp
+            }）`,
+        }
+      )
     },
   },
   {
     title: '有效性',
     key: 'validity',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.validity })
-    },
   },
   {
     title: '准确性',
     key: 'accuracy',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.accuracy })
-    },
   },
   {
     title: '置信度',
     key: 'confidence',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.confidence })
-    },
-  },
-  {
-    title: '地区',
-    key: 'location',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.location })
-    },
-  },
-  {
-    title: 'ISP',
-    key: 'isp',
-    render(row: any) {
-      return h('span', {}, { default: () => row?.isp })
-    },
   },
 ]
 
@@ -307,34 +295,23 @@ const haDNSPagination = reactive({
   },
 })
 
-// 处理保存数据函数
-function dealData(data: DNS[]) {
-  let strData =
-    'ip,version,tcp_support,tls_support,https_support,edns_support,udp_max_size,dnssec_support,type,root_delay_ms,cn_delay_ms,com_delay_ms,validity,accuracy\n'
-  // 筛选数据去除无关项
-  data.forEach((obj) => {
-    delete obj.confidence
-    delete obj.location
-    delete obj.isp
-    // 去除键和括号
-    strData = strData.concat(Object.values(obj).join(',') + '\n')
-  })
-  console.log(strData)
-  return strData
-}
-
 //导出数据函数
-const exportResult = async () => {
-  try {
-    const unDealData = postCleanedData.value
-    const stringResult = dealData(unDealData)
-    const file = new File([stringResult], 'data.txt', {
-      type: 'text/plain;charset=utf-8',
-    })
-    saveAs(file)
-  } catch (err: any) {
-    message.error(`[导出]数据服务异常，请联系管理员！${err.message}`)
-  }
+const handlers = {
+  exportResult() {
+    try {
+      const exported = transformCSV<DNS>(postCleanedData.value, [
+        'confidence',
+        'location',
+        'isp',
+      ])
+      const exportFile = new File([exported], 'data.csv', {
+        type: 'text/plain;charset=utf-8',
+      })
+      saveAs(exportFile)
+    } catch (err: any) {
+      message.error(`[导出]数据服务异常，请联系管理员！${err.message}`)
+    }
+  },
 }
 </script>
 
@@ -369,8 +346,8 @@ const exportResult = async () => {
     <!-- 上：静态属性 -->
     <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
       <div flex="~" justify="between" align="items-center" p="4">
-        <b text="base" font="semibold">发现的DNS及其静态属性测量</b>
-        <n-button type="primary" size="small" @click="exportResult"
+        <b text="base" font="semibold">DNS 静态属性测量</b>
+        <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         >
       </div>
@@ -386,7 +363,7 @@ const exportResult = async () => {
     <!-- 中：动态属性 -->
     <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
       <div flex="~" justify="between" align="items-center" p="4">
-        <b text="base" font="semibold">发现的DNS及其动态属性测量</b>
+        <b text="base" font="semibold">DNS 动态属性测量</b>
         <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         > -->
@@ -403,7 +380,7 @@ const exportResult = async () => {
     <!-- 下：高可用 -->
     <div m="y-8" bg="white" border="rounded-sm" class="custom-shadow">
       <div flex="~" justify="between" align="items-center" p="4">
-        <b text="base" font="semibold">基于置信度的高可用DNS</b>
+        <b text="base" font="semibold">基于置信度的高可用 DNS</b>
         <!-- <n-button type="primary" size="small" @click="handlers.exportResult"
           >导出数据</n-button
         > -->
@@ -413,7 +390,7 @@ const exportResult = async () => {
         :single-line="false"
         :bordered="false"
         :columns="haDNSColumns"
-        :data="preCleanedData"
+        :data="haCleanedData"
         :pagination="haDNSPagination"
       />
     </div>

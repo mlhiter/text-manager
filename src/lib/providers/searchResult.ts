@@ -17,6 +17,7 @@ interface SearchResultCtx {
   resultData: Ref<DNS[]>
   preCleanedData: Ref<DNS[]>
   postCleanedData: Ref<DNS[]>
+  haCleanedData: Ref<DNS[]>
   fetchSearchResult: () => Promise<void>
   totalCount: Ref<number>
   cateDistCount: Ref<DNSDist>
@@ -33,12 +34,19 @@ export function provideSearchResult(
   const resultLoading = ref<boolean>(false)
   const resultData = ref<DNS[]>([])
 
-  // 粗过滤，提出完全一样的
+  // 去重，去除完全一样的
   const preCleanedData = computed(() => uniq(resultData.value)) // uniqWith(resultData.value, isEqual)
 
-  // 根据 IP 去重
+  // 去重，根据 IP
   const postCleanedData = computed(() =>
     uniqBy(resultData.value, (item) => item.ip)
+  )
+
+  // 筛选出置信度高的 >= 0.8
+  const haCleanedData = computed(() =>
+    preCleanedData.value.filter(
+      (item) => item?.confidence && item.confidence >= 0.8
+    )
   )
 
   const totalCount = computed(() => postCleanedData.value.length)
@@ -128,6 +136,7 @@ export function provideSearchResult(
     resultData,
     preCleanedData,
     postCleanedData,
+    haCleanedData,
     totalCount,
     cateDistCount,
     ...handlers,
@@ -139,6 +148,7 @@ export function provideSearchResult(
     resultData,
     preCleanedData,
     postCleanedData,
+    haCleanedData,
     totalCount,
     cateDistCount,
     ...handlers,
