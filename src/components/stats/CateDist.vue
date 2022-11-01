@@ -16,10 +16,10 @@ const categoryIcons: Mappings<any> = {
 }
 
 const categoryColors: Mappings<any> = {
-  direct: '#16a34a',
-  forward: '#45d174',
-  recursive: '#f59e0b',
-  'forward&recursive': '#ef4444',
+  direct: 'success-700',
+  forward: 'success-500',
+  recursive: 'warning-600',
+  'forward&recursive': 'error-600',
 }
 
 // 统计态势
@@ -56,7 +56,7 @@ const { totalCount, cateDistCount } = useSearchResult()
               :is="categoryIcons[itemKey]"
               text="2xl"
               font="medium"
-              :class="`text-[${categoryColors[itemKey]}]`"
+              :class="`text-${categoryColors[itemKey]}`"
             />
           </n-progress>
         </template>
